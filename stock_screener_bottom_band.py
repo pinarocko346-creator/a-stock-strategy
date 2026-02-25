@@ -8,11 +8,16 @@
 大单净量 r 无 L2 时用「成交额较前一日增加」作为代理。
 """
 
+import os
+# 禁用代理，避免连接问题
+os.environ['NO_PROXY'] = '*'
+os.environ['no_proxy'] = '*'
+
 import pandas as pd
 import numpy as np
 import akshare as ak
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -187,12 +192,13 @@ class StockScreenerBottomBand:
             else:
                 code = stock_code.split('.')[-1] if '.' in stock_code else stock_code[-6:]
 
-            if code.startswith('6'):
-                df = ak.stock_zh_a_hist(symbol=code, period='daily', adjust="qfq")
-            elif code.startswith('0') or code.startswith('3'):
-                df = ak.stock_zh_a_hist(symbol=code, period='daily', adjust="qfq")
-            else:
+            if not (code.startswith('6') or code.startswith('0') or code.startswith('3')):
                 return None
+
+            # akshare 新版需传 start_date/end_date，否则可能返回空
+            end_date = datetime.now().strftime('%Y%m%d')
+            start_date = (datetime.now() - timedelta(days=400)).strftime('%Y%m%d')
+            df = ak.stock_zh_a_hist(symbol=code, period='daily', start_date=start_date, end_date=end_date, adjust="qfq")
 
             if df is None or len(df) == 0:
                 return None
@@ -216,7 +222,7 @@ class StockScreenerBottomBand:
 
     def screen_stock(self, stock_code):
         """
-        筛选单只股票：抄底波段红箭头 + 风险系数<20 + KDJ 20 下方金叉。
+        筛选单只股票：抄底波段红箭头 + 风险系数<20（已取消 KDJ 金叉限制）。
         """
         try:
             df = self.get_stock_kline(stock_code, period='daily', count=120)
@@ -234,11 +240,8 @@ class StockScreenerBottomBand:
             if pd.isna(风险系数.iloc[-1]) or 风险系数.iloc[-1] >= 20:
                 return False, None
 
-            # 3) KDJ 20 下方金叉
+            # 已删除 KDJ 下方金叉限制，仅保留红箭头 + 风险系数<20
             k, d, j = self.calculate_kdj(df)
-            if not self.check_kdj_golden_cross_below_20(k, d, threshold=20):
-                return False, None
-
             return True, {
                 'code': stock_code,
                 '风险系数': round(风险系数.iloc[-1], 2),
@@ -267,7 +270,7 @@ class StockScreenerBottomBand:
     def run_screening(self):
         """执行选股并保存清单"""
         print("=" * 80)
-        print("选股策略（抄底波段222）：红箭头(CD1/CD2/CD3) + 风险系数<20 + KDJ20下方金叉")
+        print("选股策略（抄底波段222）：红箭头 + 风险系数<20（已取消 KDJ 金叉限制）")
         print("=" * 80)
 
         all_stocks = self.get_all_a_stocks()
@@ -307,7 +310,7 @@ class StockScreenerBottomBand:
         csv_path = f"qualified_stocks_bottom_band_{ts}.csv"
 
         with open(txt_path, 'w', encoding='utf-8') as f:
-            f.write("选股清单（抄底波段222 + 风险系数<20 + KDJ20下方金叉）\n")
+            f.write("选股清单（抄底波段222 + 风险系数<20，已取消 KDJ 金叉限制）\n")
             f.write("=" * 80 + "\n")
             f.write(f"筛选时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
             f.write(f"共 {len(self.qualified_stocks)} 只\n")

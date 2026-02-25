@@ -45,7 +45,7 @@ def sma_recursive(x: pd.Series, n: int, m: int) -> pd.Series:
 
 
 class USStockScreenerBottomBand:
-    """美股抄底波段222 选股器，条件与 A 股完全一致，仅数据源为美股日线。"""
+    """美股抄底波段222 选股器，条件与 A 股一致，仅数据源为美股日线。"""
 
     def __init__(self, use_big_order_proxy=True):
         self.qualified_stocks = []
@@ -173,9 +173,6 @@ class USStockScreenerBottomBand:
                 return False, None
 
             k, d, j = self.calculate_kdj(df)
-            if not self.check_kdj_golden_cross_below_20(k, d, threshold=20):
-                return False, None
-
             return True, {
                 "code": symbol,
                 "风险系数": round(风险系数.iloc[-1], 2),
@@ -201,7 +198,7 @@ class USStockScreenerBottomBand:
     def run_screening(self, symbol_file: str = None):
         """执行选股并保存清单。"""
         print("=" * 80)
-        print("美股选股（抄底波段222）：红箭头 + 风险系数<20 + KDJ20下方金叉")
+        print("美股选股（抄底波段222）：红箭头 + 风险系数<20（已取消 KDJ 金叉限制）")
         print("=" * 80)
 
         symbols = self.get_us_stocks(symbol_file)
@@ -238,7 +235,7 @@ class USStockScreenerBottomBand:
         csv_path = f"qualified_stocks_us_bottom_band_{ts}.csv"
 
         with open(txt_path, "w", encoding="utf-8") as f:
-            f.write("美股选股清单（抄底波段222 + 风险系数<20 + KDJ20下方金叉）\n")
+            f.write("美股选股清单（抄底波段222 + 风险系数<20，已取消 KDJ 金叉限制）\n")
             f.write("=" * 80 + "\n")
             f.write(f"筛选时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
             f.write(f"共 {len(self.qualified_stocks)} 只\n")
