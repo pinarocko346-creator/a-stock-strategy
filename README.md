@@ -21,7 +21,7 @@
 
 无 L2 大单数据时，程序用「成交额较前一日增加」作为大单净量>0 的代理。
 
-## 快速开始
+## 快速开始（抄底波段222）
 
 ```bash
 # 1. 安装依赖
@@ -35,6 +35,35 @@ python stock_screener_bottom_band.py
 
 - `qualified_stocks_bottom_band_YYYYMMDD_HHMMSS.txt`：文本清单
 - `qualified_stocks_bottom_band_YYYYMMDD_HHMMSS.csv`：CSV（可导入 Excel）
+
+---
+
+## 📁 仓库文件说明
+
+| 文件 | 说明 |
+|------|------|
+| `stock_screener_bottom_band.py` | **抄底波段222** 选股脚本（本 README 主推） |
+| `a_stock_template.py` | 策略模板 - 可填入自定义指标与买卖条件 |
+| `data_fetcher.py` | 数据获取模块 |
+| `strategies/base_strategy.py` | 策略基类 |
+
+## 策略模板快速开始
+
+若想基于模板写自己的策略：
+
+```bash
+pip install akshare pandas numpy
+```
+
+打开 `a_stock_template.py`，在 **TODO 1** 填入指标计算，在 **TODO 2** 填入买入条件，然后运行：
+
+```bash
+python a_stock_template.py
+```
+
+详见模板内注释与示例（双均线金叉、超跌反弹等）。
+
+---
 
 ## 环境
 

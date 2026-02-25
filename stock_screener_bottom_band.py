@@ -17,22 +17,39 @@ import warnings
 warnings.filterwarnings('ignore')
 
 
-def sma_recursive(x: pd.Series, n: int, m: int) -> pd.Series:
+def tonghuashun_sma(series, n: int, m: int):
     """
-    同花顺/通达信 SMA(X, N, M)：递归平滑
-    SMA = (M*X + (N-M)*REF(SMA,1)) / N，首根取 X。
+    同花顺 SMA 算法（严格对齐官方规则）
+    :param series: 输入序列，list / numpy.array / pd.Series
+    :param n: 计算周期 N (N > M)
+    :param m: 权重系数 M (M < N)
+    :return: SMA 结果列表。递推公式：Yt = (M*Xt + (N-M)*Yt-1) / N，首根取当期 X。
+
+    示例（对齐同花顺官方）：SMA(CLOSE, 3, 1)，close=[10,12,14]
+      第1日 10.0；第2日 (1*12+2*10)/3=10.666...；第3日 (1*14+2*10.666...)/3=11.777...
     """
-    out = pd.Series(index=x.index, dtype=float)
-    for i in range(len(x)):
-        if i == 0 or pd.isna(x.iloc[i]):
-            out.iloc[i] = x.iloc[i]
+    if hasattr(series, 'tolist'):
+        series = series.tolist()
+    elif hasattr(series, 'values'):
+        series = series.tolist()
+    series = list(series)
+    if n <= m or len(series) == 0:
+        raise ValueError("同花顺 SMA 参数需满足 N > M，且输入序列非空")
+    sma_result = []
+    for i in range(len(series)):
+        if i == 0:
+            sma_val = series[i]
         else:
-            prev = out.iloc[i - 1]
-            if pd.isna(prev):
-                out.iloc[i] = x.iloc[i]
-            else:
-                out.iloc[i] = (m * x.iloc[i] + (n - m) * prev) / n
-    return out
+            sma_val = (m * series[i] + (n - m) * sma_result[i - 1]) / n
+        sma_result.append(sma_val)
+    return sma_result
+
+
+def sma_recursive(x: pd.Series, n: int, m: int) -> pd.Series:
+    """对 pd.Series 做同花顺 SMA，返回 pd.Series（内部调用 tonghuashun_sma）。"""
+    arr = x.astype(float).tolist()
+    result = tonghuashun_sma(arr, n, m)
+    return pd.Series(result, index=x.index, dtype=float)
 
 
 class StockScreenerBottomBand:
