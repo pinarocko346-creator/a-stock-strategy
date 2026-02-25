@@ -1,0 +1,15 @@
+# 选股结果（含时间戳，不必入库）
+qualified_stocks_*.txt
+qualified_stocks_*.csv
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+dist/
+build/
+# 环境
+.env
+.venv/
+venv/
+*.log
